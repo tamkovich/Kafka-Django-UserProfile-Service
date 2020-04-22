@@ -24,9 +24,10 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+        UserProfile.objects.create(user=user, **profile_data)
         producer = utils.get_producer()
         profile_data["user_id"] = user.id
-        producer.send('profile-topic', key=b'create', value=profile_data)
+        producer.send('user-topic', key=b'create', value=validated_data)
         return user
 
     def update(self, instance, validated_data):
@@ -36,6 +37,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         instance.save()
 
         producer = utils.get_producer()
-        profile_data["user_id"] = instance.id
-        producer.send('profile-topic', key=b'update', value=profile_data)
+        profile = instance.profile
+        profile.update(profile_data, with_commit=True)
+        producer.send('user-topic', key=b'update', value=validated_data)
         return instance
