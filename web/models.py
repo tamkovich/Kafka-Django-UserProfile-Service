@@ -25,7 +25,7 @@ class UserProfile(models.Model):
     zip = models.CharField(max_length=5)
     photo = models.ImageField(upload_to='uploads', blank=True)
 
-    def update(self, data, with_commit=False):
+    def update(self, data, with_commit=False) -> None:
         for field, value in data.items():
             setattr(self, field, value)
         if with_commit:

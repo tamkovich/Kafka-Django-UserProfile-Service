@@ -1,31 +1,22 @@
-import json
 import os
+import socket
 
-from kafka import (
-    KafkaProducer,
-    KafkaConsumer,
+from confluent_kafka import (
+    Producer,
+    Consumer,
 )
 
-from django.core.serializers.json import DjangoJSONEncoder
+
+def get_producer() -> Producer:
+    return Producer({
+        'bootstrap.servers': f'{os.environ["KAFKA_HOST"]}:{os.environ["KAFKA_PORT"]}',
+        'client.id': socket.gethostname(),
+    })
 
 
-def get_producer():
-    return KafkaProducer(
-        bootstrap_servers=[
-            f'{os.environ["KAFKA_HOST"]}:{os.environ["KAFKA_PORT"]}',
-        ],
-        value_serializer=lambda item: json.dumps(
-            item,
-            cls=DjangoJSONEncoder,
-        ).encode('ascii'),
-    )
-
-
-def get_consumer():
-    return KafkaConsumer(
-        'profile-topic',
-        bootstrap_servers=[
-            f'{os.environ["KAFKA_HOST"]}:{os.environ["KAFKA_PORT"]}',
-        ],
-        value_deserializer=lambda item: json.loads(item),
-    )
+def get_consumer() -> Consumer:
+    return Consumer({
+        'bootstrap.servers': f'{os.environ["KAFKA_HOST"]}:{os.environ["KAFKA_PORT"]}',
+        'group.id': "user-topic",
+        'auto.offset.reset': 'smallest',
+    })
